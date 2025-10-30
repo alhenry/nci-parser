@@ -1,0 +1,2 @@
+# NCI Job Parser has no external dependencies
+# Python 3.6+ standard library only

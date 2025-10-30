@@ -57,7 +57,7 @@ class TestNCIJobParser(unittest.TestCase):
         self.assertEqual(result['job_id'], '87654321')
         self.assertEqual(result['job_id_full'], '87654321.gadi-pbs')
         self.assertEqual(result['server'], 'gadi-pbs')
-        self.assertEqual(result['status'], 'submitted')
+        self.assertEqual(result['status'], 'queued')
     
     def test_parse_empty_line(self):
         """Test parsing an empty line."""

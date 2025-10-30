@@ -16,16 +16,19 @@ from typing import Dict, List, Optional
 class NCIJobParser:
     """Parser for NCI job submission output."""
     
+    # Define output field names as class constant
+    FIELDNAMES = ['line_number', 'job_id', 'job_id_full', 'server', 'status']
+    
     def __init__(self):
         """Initialize the parser with regex patterns for NCI job output."""
         # Pattern to match typical PBS/Torque job submission output
         # Example: "12345678.gadi-pbs" or just "12345678"
         self.job_id_pattern = re.compile(r'^(\d+)(?:\.[\w-]+)?$')
         
-        # Pattern to match full job submission line
-        # Example: "Job 12345678.gadi-pbs submitted"
+        # Pattern to match full job submission line with status
+        # Example: "Job 12345678.gadi-pbs submitted" or "Job 12345678.gadi-pbs queued"
         self.job_submission_pattern = re.compile(
-            r'(?:Job\s+)?(\d+(?:\.[\w-]+)?)\s+(?:submitted|queued)?',
+            r'(?:Job\s+)?(\d+(?:\.[\w-]+)?)\s+(submitted|queued)',
             re.IGNORECASE
         )
     
@@ -47,12 +50,13 @@ class NCIJobParser:
         match = self.job_submission_pattern.search(line)
         if match:
             job_id_full = match.group(1)
+            status = match.group(2).lower()
             job_id, server = self._split_job_id(job_id_full)
             return {
                 'job_id': job_id,
                 'job_id_full': job_id_full,
                 'server': server or '',
-                'status': 'submitted'
+                'status': status
             }
         
         # Try to match just a job ID
@@ -144,12 +148,9 @@ class NCIJobParser:
             print("Warning: No jobs to write.", file=sys.stderr)
             return
         
-        # Define field order
-        fieldnames = ['line_number', 'job_id', 'job_id_full', 'server', 'status']
-        
         try:
             with open(output_file, 'w', newline='', encoding='utf-8') as f:
-                writer = csv.DictWriter(f, fieldnames=fieldnames)
+                writer = csv.DictWriter(f, fieldnames=self.FIELDNAMES)
                 writer.writeheader()
                 writer.writerows(jobs)
             
@@ -170,12 +171,9 @@ class NCIJobParser:
             print("Warning: No jobs to write.", file=sys.stderr)
             return
         
-        # Define field order
-        fieldnames = ['line_number', 'job_id', 'job_id_full', 'server', 'status']
-        
         try:
             with open(output_file, 'w', newline='', encoding='utf-8') as f:
-                writer = csv.DictWriter(f, fieldnames=fieldnames, delimiter='\t')
+                writer = csv.DictWriter(f, fieldnames=self.FIELDNAMES, delimiter='\t')
                 writer.writeheader()
                 writer.writerows(jobs)
             

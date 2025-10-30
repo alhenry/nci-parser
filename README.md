@@ -5,10 +5,30 @@ A simple Python command-line tool to parse NCI (National Computational Infrastru
 ## Features
 
 - Extracts resource usage data from NCI PBS job output files
-- Handles multiple input files
+- Handles multiple input files efficiently
+- **Parallel processing** for fast handling of thousands of files
+- **Optimized file reading** - only reads file tails where resource data is located
 - Outputs to CSV format for easy analysis
 - Preserves time format in fields like CPU Time Used, Walltime
 - Extracts job metadata including Job ID, Project, Exit Status, Service Units, Memory, CPUs, etc.
+
+## Performance
+
+The parser is optimized for processing large numbers of files:
+
+- **Parallel Processing**: Uses multiple CPU cores to process files concurrently
+- **Line-based Tail Reading**: Only reads the last 30 lines of each file (where resource usage is located) instead of entire files
+- **Compiled Regex**: Pre-compiled regex patterns for faster parsing
+- **Progress Indicators**: Shows progress when processing large batches (every 100 files)
+- **Flexible Input**: Supports file lists and stdin for easy integration with `find` and other tools
+
+Typical performance:
+- ~1000 files in under 10 seconds (on 8-core machine)
+- ~10000 files in under 60 seconds (on 8-core machine)
+
+For detailed performance information and benchmarks, see [PERFORMANCE.md](PERFORMANCE.md).
+
+For a quick reference guide with common workflows, see [QUICKREF.md](QUICKREF.md).
 
 ## Installation
 
@@ -30,15 +50,27 @@ pip install -e .
 
 ### Command Line
 
+Basic usage:
 ```bash
 nci-job-parser <output.csv> <file1> [<file2> ...]
 ```
 
+With options:
+```bash
+nci-job-parser [OPTIONS] <output.csv> <file1> [<file2> ...]
+```
+
+**Options:**
+- `--workers N` - Number of parallel workers (default: CPU count)
+- `--no-parallel` - Disable parallel processing (useful for debugging)
+- `--file-list FILE` - Read file paths from FILE (one per line)
+- `-` - Read file paths from stdin (one per line)
+
 ### Example
 
-Parse a single job output file:
+Parse files directly from command line:
 ```bash
-nci-job-parser results.csv examples/142112589.gadi-pbs.OU
+nci-job-parser results.csv examples/*.OU
 ```
 
 Parse multiple job output files:
@@ -46,9 +78,29 @@ Parse multiple job output files:
 nci-job-parser results.csv examples/*.OU
 ```
 
-Parse files from a directory:
+Parse files from a directory using shell globbing:
 ```bash
 nci-job-parser output.csv /path/to/job_logs/*.OU
+```
+
+Parse using a file list:
+```bash
+nci-job-parser output.csv --file-list files.txt
+```
+
+Parse using `find` and stdin (useful for complex searches):
+```bash
+find /path/to/job_logs -name "*.OU" -mtime -7 | nci-job-parser recent_jobs.csv -
+```
+
+Parse with a specific number of workers:
+```bash
+nci-job-parser --workers 16 output.csv /path/to/job_logs/*.OU
+```
+
+Combine options:
+```bash
+find /path/to/job_logs -name "*.OU" | nci-job-parser --workers 16 output.csv -
 ```
 
 ### Output

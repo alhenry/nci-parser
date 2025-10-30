@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="nci-job-parser",
-    version="0.1.0",
+    version="0.3.0",
     author="Albert Henry",
     description="Parse NCI job output files into tabular format",
     long_description=long_description,

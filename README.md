@@ -61,12 +61,20 @@ nci-job-parser [OPTIONS] <output.csv> <file1> [<file2> ...]
 ```
 
 **Options:**
+- `-h, --help` - Show help message and exit
+- `-v, --version` - Show version and exit
 - `--workers N` - Number of parallel workers (default: CPU count)
 - `--no-parallel` - Disable parallel processing (useful for debugging)
 - `--file-list FILE` - Read file paths from FILE (one per line)
 - `-` - Read file paths from stdin (one per line)
 
 ### Example
+
+Show help and version:
+```bash
+nci-job-parser --help
+nci-job-parser --version
+```
 
 Parse files directly from command line:
 ```bash

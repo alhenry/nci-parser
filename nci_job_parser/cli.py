@@ -8,6 +8,39 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 from multiprocessing import cpu_count
 
 from .parser import parse_file_tail
+from . import __version__
+
+
+def print_help():
+    """Print help message."""
+    print("NCI Job Parser v{}".format(__version__))
+    print()
+    print("Usage: nci-job-parser [OPTIONS] <output.csv> <file1> [<file2> ...]")
+    print("       nci-job-parser [OPTIONS] <output.csv> --file-list <list.txt>")
+    print("       nci-job-parser [OPTIONS] <output.csv> -")
+    print()
+    print("Parse NCI job output files and write to CSV format.")
+    print()
+    print("Options:")
+    print("  -h, --help       Show this help message and exit")
+    print("  -v, --version    Show version and exit")
+    print("  --workers N      Number of parallel workers (default: CPU count)")
+    print("  --no-parallel    Disable parallel processing")
+    print("  --file-list FILE Read file paths from FILE (one per line)")
+    print("  -                Read file paths from stdin (one per line)")
+    print()
+    print("Examples:")
+    print("  nci-job-parser results.csv job_logs/*.OU")
+    print("  nci-job-parser --workers 8 results.csv job_logs/*.OU")
+    print("  nci-job-parser results.csv --file-list files.txt")
+    print("  find job_logs -name '*.OU' | nci-job-parser results.csv -")
+    print()
+    print("Documentation: https://github.com/alhenry/nci-job-parser")
+
+
+def print_version():
+    """Print version information."""
+    print("NCI Job Parser v{}".format(__version__))
 
 
 def process_single_file(filepath):
@@ -34,21 +67,17 @@ def process_single_file(filepath):
 
 def main():
     """Main entry point for the CLI."""
+    # Handle help and version flags first
+    if len(sys.argv) > 1:
+        if sys.argv[1] in ['-h', '--help', 'help']:
+            print_help()
+            sys.exit(0)
+        if sys.argv[1] in ['-v', '--version', 'version']:
+            print_version()
+            sys.exit(0)
+    
     if len(sys.argv) < 2:
-        print("Usage: nci-job-parser [OPTIONS] <output.csv> <file1> [<file2> ...]")
-        print("       nci-job-parser [OPTIONS] <output.csv> --file-list <list.txt>")
-        print("       nci-job-parser [OPTIONS] <output.csv> -")
-        print("\nParse NCI job output files and write to CSV format.")
-        print("\nOptions:")
-        print("  --workers N      Number of parallel workers (default: CPU count)")
-        print("  --no-parallel    Disable parallel processing")
-        print("  --file-list FILE Read file paths from FILE (one per line)")
-        print("  -                Read file paths from stdin (one per line)")
-        print("\nExample:")
-        print("  nci-job-parser results.csv job_logs/*.OU")
-        print("  nci-job-parser --workers 8 results.csv job_logs/*.OU")
-        print("  nci-job-parser results.csv --file-list files.txt")
-        print("  find job_logs -name '*.OU' | nci-job-parser results.csv -")
+        print_help()
         sys.exit(1)
     
     # Parse arguments
@@ -58,7 +87,13 @@ def main():
     
     # Check for options at the beginning
     while args and args[0].startswith('--') and args[0] not in ['--file-list']:
-        if args[0] == '--workers' and len(args) > 1:
+        if args[0] in ['-h', '--help']:
+            print_help()
+            sys.exit(0)
+        elif args[0] in ['-v', '--version']:
+            print_version()
+            sys.exit(0)
+        elif args[0] == '--workers' and len(args) > 1:
             try:
                 workers = int(args[1])
                 args = args[2:]

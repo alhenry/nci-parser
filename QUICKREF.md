@@ -17,6 +17,8 @@ nci-job-parser output.csv /path/to/logs/**/*.OU
 
 | Option | Description | Example |
 |--------|-------------|---------|
+| `-h, --help` | Show help message | `nci-job-parser --help` |
+| `-v, --version` | Show version | `nci-job-parser --version` |
 | `--workers N` | Set number of parallel workers | `nci-job-parser --workers 8 output.csv *.OU` |
 | `--no-parallel` | Disable parallel processing | `nci-job-parser --no-parallel output.csv *.OU` |
 | `--file-list FILE` | Read file paths from FILE | `nci-job-parser output.csv --file-list files.txt` |

@@ -8,12 +8,15 @@ All notable changes to this project will be documented in this file.
 - **Line-based tail reading**: More efficient - reads only last 30 lines instead of last N bytes
 - **File list support**: `--file-list` option to read file paths from a file
 - **Stdin support**: `-` option to read file paths from stdin for pipeline integration
+- **Help flag**: `-h, --help` to show help message
+- **Version flag**: `-v, --version` to show version information
 - Better integration with Unix tools like `find`
 
 ### Changed
 - Improved tail reading algorithm: line-based instead of byte-based
 - Resource usage section is always within last 20-25 lines, optimized for this
 - More flexible input methods (direct args, file list, or stdin)
+- Enhanced help output with usage examples
 
 ### Example Use Cases
 ```bash

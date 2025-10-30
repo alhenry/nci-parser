@@ -1,0 +1,3 @@
+filename,CPU Time Used,Exit Status,Job Id,JobFS requested,JobFS used,Memory Requested,Memory Used,NCPUs Requested,NCPUs Used,Project,Service Units,Walltime Used,Walltime requested,usage_date,usage_time
+142112589.gadi-pbs.OU,11:21:45,0,142112589.gadi-pbs,500.0MB,0B,600.0GB,491.87GB,16,16,ei56,639.55,11:22:11,12:00:00,2025-06-02,00:24:42
+142208190.gadi-pbs.OU,00:00:23,1,142208190.gadi-pbs,100.0MB,0B,8.0GB,8.0GB,4,4,ei56,0.06,00:00:27,12:00:00,2025-06-02,20:26:29

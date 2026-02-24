@@ -1,4 +1,4 @@
-# NCI Job Parser
+# NCI Parser
 
 A simple Python command-line tool to parse NCI (National Computational Infrastructure) job output files and extract resource usage information into tabular format (CSV).
 
@@ -35,8 +35,8 @@ For a quick reference guide with common workflows, see [QUICKREF.md](QUICKREF.md
 ### From source
 
 ```bash
-git clone https://github.com/alhenry/nci-job-parser.git
-cd nci-job-parser
+git clone https://github.com/alhenry/nci-parser.git
+cd nci-parser
 pip install -e .
 ```
 
@@ -52,12 +52,12 @@ pip install -e .
 
 Basic usage:
 ```bash
-nci-job-parser <output.csv> <file1> [<file2> ...]
+nci-parser <output.csv> <file1> [<file2> ...]
 ```
 
 With options:
 ```bash
-nci-job-parser [OPTIONS] <output.csv> <file1> [<file2> ...]
+nci-parser [OPTIONS] <output.csv> <file1> [<file2> ...]
 ```
 
 **Options:**
@@ -72,43 +72,43 @@ nci-job-parser [OPTIONS] <output.csv> <file1> [<file2> ...]
 
 Show help and version:
 ```bash
-nci-job-parser --help
-nci-job-parser --version
+nci-parser --help
+nci-parser --version
 ```
 
 Parse files directly from command line:
 ```bash
-nci-job-parser results.csv examples/*.OU
+nci-parser results.csv examples/*.OU
 ```
 
 Parse multiple job output files:
 ```bash
-nci-job-parser results.csv examples/*.OU
+nci-parser results.csv examples/*.OU
 ```
 
 Parse files from a directory using shell globbing:
 ```bash
-nci-job-parser output.csv /path/to/job_logs/*.OU
+nci-parser output.csv /path/to/job_logs/*.OU
 ```
 
 Parse using a file list:
 ```bash
-nci-job-parser output.csv --file-list files.txt
+nci-parser output.csv --file-list files.txt
 ```
 
 Parse using `find` and stdin (useful for complex searches):
 ```bash
-find /path/to/job_logs -name "*.OU" -mtime -7 | nci-job-parser recent_jobs.csv -
+find /path/to/job_logs -name "*.OU" -mtime -7 | nci-parser recent_jobs.csv -
 ```
 
 Parse with a specific number of workers:
 ```bash
-nci-job-parser --workers 16 output.csv /path/to/job_logs/*.OU
+nci-parser --workers 16 output.csv /path/to/job_logs/*.OU
 ```
 
 Combine options:
 ```bash
-find /path/to/job_logs -name "*.OU" | nci-job-parser --workers 16 output.csv -
+find /path/to/job_logs -name "*.OU" | nci-parser --workers 16 output.csv -
 ```
 
 ### Output

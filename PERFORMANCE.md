@@ -2,7 +2,7 @@
 
 ## Overview
 
-The NCI Job Parser has been optimized to efficiently handle thousands of files. Here are the key optimizations implemented in v0.2.0:
+The NCI Parser has been optimized to efficiently handle thousands of files. Here are the key optimizations implemented in v0.2.0:
 
 ## 1. Line-based Tail Reading (File I/O Optimization)
 
@@ -118,24 +118,24 @@ Processing 10,000 NCI job output files:
 
 ```bash
 # Let the tool auto-detect CPU count
-nci-job-parser output.csv job_logs/*.OU
+nci-parser output.csv job_logs/*.OU
 
 # Or specify worker count explicitly
-nci-job-parser --workers 16 output.csv job_logs/*.OU
+nci-parser --workers 16 output.csv job_logs/*.OU
 ```
 
 ### Using with Unix Pipelines
 
 ```bash
 # Find all job files modified in last week
-find job_logs/ -name "*.OU" -mtime -7 | nci-job-parser recent.csv -
+find job_logs/ -name "*.OU" -mtime -7 | nci-parser recent.csv -
 
 # Find failed jobs (exit status != 0)
 find job_logs/ -name "*.OU" -exec grep -l "Exit Status.*[^0]$" {} \; | \
-  nci-job-parser failed.csv -
+  nci-parser failed.csv -
 
 # Process files matching pattern
-find . -type f -name "*gadi-pbs.OU" | nci-job-parser output.csv -
+find . -type f -name "*gadi-pbs.OU" | nci-parser output.csv -
 ```
 
 ### Using File Lists
@@ -144,29 +144,29 @@ find . -type f -name "*gadi-pbs.OU" | nci-job-parser output.csv -
 # Create a file list first (useful for complex selections)
 find job_logs/ -name "*.OU" > files.txt
 # Then process
-nci-job-parser output.csv --file-list files.txt
+nci-parser output.csv --file-list files.txt
 
 # Or combine multiple sources
-cat batch1_files.txt batch2_files.txt | nci-job-parser combined.csv -
+cat batch1_files.txt batch2_files.txt | nci-parser combined.csv -
 ```
 
 ### For Debugging
 
 ```bash
 # Use sequential processing to see errors more clearly
-nci-job-parser --no-parallel output.csv job_logs/*.OU
+nci-parser --no-parallel output.csv job_logs/*.OU
 ```
 
 ### For Very Large Batches
 
 ```bash
 # Process in chunks if needed
-find job_logs/ -name "*.OU" | head -10000 | nci-job-parser batch1.csv -
-find job_logs/ -name "*.OU" | tail -n +10001 | nci-job-parser batch2.csv -
+find job_logs/ -name "*.OU" | head -10000 | nci-parser batch1.csv -
+find job_logs/ -name "*.OU" | tail -n +10001 | nci-parser batch2.csv -
 
 # Or use parallel with xargs for different approach
 find job_logs/ -name "*.OU" -print0 | \
-  xargs -0 -P 4 -n 2500 nci-job-parser batch_{}.csv
+  xargs -0 -P 4 -n 2500 nci-parser batch_{}.csv
 ```
 
 ## Memory Usage

@@ -211,4 +211,4 @@ __marimo__/
 
 # test files
 *.txt
-*.csv
+*.csv.DS_Store

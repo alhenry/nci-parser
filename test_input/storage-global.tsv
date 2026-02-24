@@ -1,0 +1,4 @@
+project	filesystem	used	iused	allocation	iallocation	stakeholder	stakeholder_allocation	stakeholder_iallocation
+fy54	gdata6	572.48 TiB	26.03 M	580.00 TiB	31.48 M	Garvan	580.00 TiB	31.48 M
+fy54	scratch2	18.06 TiB	386.79 K	50.00 TiB	3.78 M		50.00 TiB	3.78 M
+fy54	massdata	434.50 TiB	28.15 K					

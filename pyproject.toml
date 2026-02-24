@@ -3,8 +3,8 @@ requires = ["setuptools>=45", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "nci-job-parser"
-version = "0.3.0"
+name = "nci-parser"
+version = "0.4.0"
 description = "Parse NCI job output files into tabular format"
 readme = "README.md"
 requires-python = ">=3.6"
@@ -14,4 +14,5 @@ authors = [
 ]
 
 [project.scripts]
-nci-job-parser = "nci_job_parser.cli:main"
+nci-parser = "nci_parser.cli:main"
+nci-job-parser = "nci_parser.jobs_cli:jobs_main"

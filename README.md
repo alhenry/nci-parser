@@ -1,38 +1,30 @@
 # NCI Parser
 
-A simple Python command-line tool to parse NCI (National Computational Infrastructure) job output files and extract resource usage information into tabular format (CSV).
+A Python command-line tool to parse NCI (National Computational Infrastructure) output files and extract resource usage information into tabular format.
 
 ## Features
 
-- Extracts resource usage data from NCI PBS job output files
-- Handles multiple input files efficiently
-- **Parallel processing** for fast handling of thousands of files
-- **Optimized file reading** - only reads file tails where resource data is located
-- Outputs to CSV format for easy analysis
-- Preserves time format in fields like CPU Time Used, Walltime
-- Extracts job metadata including Job ID, Project, Exit Status, Service Units, Memory, CPUs, etc.
+- **`jobs` subcommand** — parse PBS job output files into CSV
+  - Parallel processing across multiple CPU cores
+  - Optimised file reading (only reads file tails where resource data lives)
+  - Accepts file lists and stdin for easy integration with `find`
+- **`quota` subcommand** — parse `nci-account` quota/storage reports into TSV
+  - Produces three tables: overall usage, per-user usage, and storage
+  - Reads from a file, stdin (pipe directly from `nci-account`), or `-`
+  - Write output to files or print to stdout for further processing
 
 ## Performance
 
-The parser is optimized for processing large numbers of files:
+The `jobs` subcommand is optimised for large batches:
 
-- **Parallel Processing**: Uses multiple CPU cores to process files concurrently
-- **Line-based Tail Reading**: Only reads the last 30 lines of each file (where resource usage is located) instead of entire files
-- **Compiled Regex**: Pre-compiled regex patterns for faster parsing
-- **Progress Indicators**: Shows progress when processing large batches (every 100 files)
-- **Flexible Input**: Supports file lists and stdin for easy integration with `find` and other tools
+- **Parallel processing**: uses multiple CPU cores concurrently
+- **Line-based tail reading**: only reads the last 30 lines of each file
+- **Compiled regex**: pre-compiled patterns for faster parsing
+- Typical performance: ~1 000 files in under 10 s, ~10 000 files in under 60 s (8-core machine)
 
-Typical performance:
-- ~1000 files in under 10 seconds (on 8-core machine)
-- ~10000 files in under 60 seconds (on 8-core machine)
-
-For detailed performance information and benchmarks, see [PERFORMANCE.md](PERFORMANCE.md).
-
-For a quick reference guide with common workflows, see [QUICKREF.md](QUICKREF.md).
+See [PERFORMANCE.md](PERFORMANCE.md) for benchmarks and [QUICKREF.md](QUICKREF.md) for a quick reference guide.
 
 ## Installation
-
-### From source
 
 ```bash
 git clone https://github.com/alhenry/nci-parser.git
@@ -40,88 +32,56 @@ cd nci-parser
 pip install -e .
 ```
 
-### Development installation
-
-```bash
-pip install -e .
-```
-
 ## Usage
 
-### Command Line
-
-Basic usage:
-```bash
-nci-parser <output.csv> <file1> [<file2> ...]
+```
+nci-parser <subcommand> [OPTIONS] ...
 ```
 
-With options:
-```bash
-nci-parser [OPTIONS] <output.csv> <file1> [<file2> ...]
+Run `nci-parser --help` for top-level help, or `nci-parser <subcommand> --help` for subcommand-specific help.
+
+---
+
+### `jobs` — Parse PBS job output files
+
+```
+nci-parser jobs [OPTIONS] <output.csv> <file1> [<file2> ...]
+nci-parser jobs [OPTIONS] <output.csv> --file-list <list.txt>
+nci-parser jobs [OPTIONS] <output.csv> -
 ```
 
 **Options:**
-- `-h, --help` - Show help message and exit
-- `-v, --version` - Show version and exit
-- `--workers N` - Number of parallel workers (default: CPU count)
-- `--no-parallel` - Disable parallel processing (useful for debugging)
-- `--file-list FILE` - Read file paths from FILE (one per line)
-- `-` - Read file paths from stdin (one per line)
 
-### Example
+| Option | Description |
+|---|---|
+| `-h, --help` | Show help and exit |
+| `-v, --version` | Show version and exit |
+| `--workers N` | Number of parallel workers (default: CPU count) |
+| `--no-parallel` | Disable parallel processing |
+| `--file-list FILE` | Read file paths from FILE (one per line) |
+| `-` | Read file paths from stdin (one per line) |
 
-Show help and version:
+**Examples:**
+
 ```bash
-nci-parser --help
-nci-parser --version
+# Parse files directly
+nci-parser jobs results.csv job_logs/*.OU
+
+# Use a specific number of workers
+nci-parser jobs --workers 8 results.csv job_logs/*.OU
+
+# Parse from a file list
+nci-parser jobs results.csv --file-list files.txt
+
+# Pipe from find
+find /path/to/job_logs -name "*.OU" -mtime -7 | nci-parser jobs recent_jobs.csv -
 ```
 
-Parse files directly from command line:
-```bash
-nci-parser results.csv examples/*.OU
-```
+**Output columns:**
 
-Parse multiple job output files:
-```bash
-nci-parser results.csv examples/*.OU
-```
+`filename`, `usage_date`, `usage_time`, `Job Id`, `Project`, `Exit Status`, `Service Units`, `NCPUs Requested`, `NCPUs Used`, `CPU Time Used`, `Memory Requested`, `Memory Used`, `Walltime requested`, `Walltime Used`, `JobFS requested`, `JobFS used`
 
-Parse files from a directory using shell globbing:
-```bash
-nci-parser output.csv /path/to/job_logs/*.OU
-```
-
-Parse using a file list:
-```bash
-nci-parser output.csv --file-list files.txt
-```
-
-Parse using `find` and stdin (useful for complex searches):
-```bash
-find /path/to/job_logs -name "*.OU" -mtime -7 | nci-parser recent_jobs.csv -
-```
-
-Parse with a specific number of workers:
-```bash
-nci-parser --workers 16 output.csv /path/to/job_logs/*.OU
-```
-
-Combine options:
-```bash
-find /path/to/job_logs -name "*.OU" | nci-parser --workers 16 output.csv -
-```
-
-### Output
-
-The tool generates a CSV file with columns for each resource metric found in the job output files:
-
-| filename | usage_date | usage_time | Job Id | Project | Exit Status | Service Units | NCPUs Requested | NCPUs Used | CPU Time Used | Memory Requested | Memory Used | Walltime requested | Walltime Used | JobFS requested | JobFS used |
-|----------|------------|------------|--------|---------|-------------|---------------|-----------------|------------|---------------|------------------|-------------|-------------------|---------------|-----------------|------------|
-| 142112589.gadi-pbs.OU | 2025-06-02 | 00:24:42 | 142112589.gadi-pbs | ei56 | 0 | 639.55 | 16 | 16 | 11:21:45 | 600.0GB | 491.87GB | 12:00:00 | 11:22:11 | 500.0MB | 0B |
-
-## Input Format
-
-The tool expects NCI PBS job output files that contain a resource usage section at the end, formatted like:
+**Expected input format:**
 
 ```
 ======================================================================================
@@ -130,15 +90,66 @@ The tool expects NCI PBS job output files that contain a resource usage section 
    Project:            ei56
    Exit Status:        0
    Service Units:      639.55
-   NCPUs Requested:    16                     NCPUs Used: 16              
-                                           CPU Time Used: 11:21:45        
-   Memory Requested:   600.0GB               Memory Used: 491.87GB        
-   Walltime requested: 12:00:00            Walltime Used: 11:22:11        
-   JobFS requested:    500.0MB                JobFS used: 0B              
+   NCPUs Requested:    16                     NCPUs Used: 16
+                                           CPU Time Used: 11:21:45
+   Memory Requested:   600.0GB               Memory Used: 491.87GB
+   Walltime requested: 12:00:00            Walltime Used: 11:22:11
+   JobFS requested:    500.0MB                JobFS used: 0B
 ======================================================================================
+```
+
+---
+
+### `quota` — Parse NCI account/quota reports
+
+```
+nci-parser quota [OPTIONS] [<input_file>]
+```
+
+Input can be a file path, `-` for stdin, or omitted to read from stdin — allowing direct piping from `nci-account`.
+
+**Options:**
+
+| Option | Description |
+|---|---|
+| `-h, --help` | Show help and exit |
+| `-v, --version` | Show version and exit |
+| `--output TABLE[,TABLE]` | Tables to write: `usage-global`, `usage-users`, `storage-global` (default: all three) |
+| `--outdir DIR` | Write output files to DIR instead of alongside the input file |
+| `--stem NAME` | Base filename stem when reading from stdin (default: `stdin`) |
+| `--stdout` | Print TSV to stdout instead of writing files |
+
+**Output tables:**
+
+| Table | Filename | Description |
+|---|---|---|
+| `usage-global` | `<stem>.usage-global.tsv` | Overall compute usage + stakeholder breakdown |
+| `usage-users` | `<stem>.usage-users.tsv` | Per-user usage and reserved amounts |
+| `storage-global` | `<stem>.storage-global.tsv` | Per-filesystem storage usage + stakeholder breakdown |
+
+**Examples:**
+
+```bash
+# Parse a saved report file
+nci-parser quota report.txt
+
+# Write output to a specific directory
+nci-parser quota --outdir results/ report.txt
+
+# Select a single table
+nci-parser quota --output usage-users report.txt
+
+# Pipe directly from nci-account
+nci-account -v -P ab12 | nci-parser quota --outdir results/ --stem ab12
+
+# Print a single table to stdout (e.g. for further processing)
+nci-account -v -P ab12 | nci-parser quota --stdout --output usage-users
+
+# Pipe into column for pretty printing
+nci-account -v -P ab12 | nci-parser quota --stdout --output usage-global | column -t -s $'\t'
 ```
 
 ## License
 
 MIT License
-Utility program to parse NCI job output
+

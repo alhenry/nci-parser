@@ -21,13 +21,13 @@ All notable changes to this project will be documented in this file.
 ### Example Use Cases
 ```bash
 # Using file list
-nci-job-parser output.csv --file-list files.txt
+nci-parser output.csv --file-list files.txt
 
 # Using find with stdin
-find /path/to/logs -name "*.OU" -mtime -7 | nci-job-parser recent.csv -
+find /path/to/logs -name "*.OU" -mtime -7 | nci-parser recent.csv -
 
 # Combined with other Unix tools
-grep -l "Exit Status.*0" *.OU | nci-job-parser successful.csv -
+grep -l "Exit Status.*0" *.OU | nci-parser successful.csv -
 ```
 
 ## [0.2.0] - 2025-10-30

@@ -1,34 +1,34 @@
-# NCI Job Parser - Quick Reference
+# NCI Parser - Quick Reference
 
 ## Basic Usage
 
 ```bash
 # Parse files from command line
-nci-job-parser output.csv file1.OU file2.OU file3.OU
+nci-parser output.csv file1.OU file2.OU file3.OU
 
 # Parse all files in directory
-nci-job-parser output.csv job_logs/*.OU
+nci-parser output.csv job_logs/*.OU
 
 # Parse with wildcard
-nci-job-parser output.csv /path/to/logs/**/*.OU
+nci-parser output.csv /path/to/logs/**/*.OU
 ```
 
 ## Options
 
 | Option | Description | Example |
 |--------|-------------|---------|
-| `-h, --help` | Show help message | `nci-job-parser --help` |
-| `-v, --version` | Show version | `nci-job-parser --version` |
-| `--workers N` | Set number of parallel workers | `nci-job-parser --workers 8 output.csv *.OU` |
-| `--no-parallel` | Disable parallel processing | `nci-job-parser --no-parallel output.csv *.OU` |
-| `--file-list FILE` | Read file paths from FILE | `nci-job-parser output.csv --file-list files.txt` |
-| `-` | Read file paths from stdin | `find . -name "*.OU" \| nci-job-parser output.csv -` |
+| `-h, --help` | Show help message | `nci-parser --help` |
+| `-v, --version` | Show version | `nci-parser --version` |
+| `--workers N` | Set number of parallel workers | `nci-parser --workers 8 output.csv *.OU` |
+| `--no-parallel` | Disable parallel processing | `nci-parser --no-parallel output.csv *.OU` |
+| `--file-list FILE` | Read file paths from FILE | `nci-parser output.csv --file-list files.txt` |
+| `-` | Read file paths from stdin | `find . -name "*.OU" \| nci-parser output.csv -` |
 
 ## Input Methods
 
 ### 1. Command Line Arguments (default)
 ```bash
-nci-job-parser output.csv file1.OU file2.OU file3.OU
+nci-parser output.csv file1.OU file2.OU file3.OU
 ```
 
 ### 2. File List
@@ -41,35 +41,35 @@ job_logs/142208190.gadi-pbs.OU
 
 Then use:
 ```bash
-nci-job-parser output.csv --file-list files.txt
+nci-parser output.csv --file-list files.txt
 ```
 
 ### 3. Standard Input (stdin)
 Pipe file paths from other commands:
 ```bash
-find job_logs -name "*.OU" | nci-job-parser output.csv -
+find job_logs -name "*.OU" | nci-parser output.csv -
 ```
 
 ## Common Workflows
 
 ### Find jobs from last week
 ```bash
-find /path/to/logs -name "*.OU" -mtime -7 | nci-job-parser recent.csv -
+find /path/to/logs -name "*.OU" -mtime -7 | nci-parser recent.csv -
 ```
 
 ### Find failed jobs (exit status != 0)
 ```bash
-grep -l "Exit Status.*[^0]" *.OU | nci-job-parser failed.csv -
+grep -l "Exit Status.*[^0]" *.OU | nci-parser failed.csv -
 ```
 
 ### Find jobs using > 100GB memory
 ```bash
-grep -l "Memory Used.*[1-9][0-9][0-9]\.[0-9]*GB" *.OU | nci-job-parser highmem.csv -
+grep -l "Memory Used.*[1-9][0-9][0-9]\.[0-9]*GB" *.OU | nci-parser highmem.csv -
 ```
 
 ### Process specific project
 ```bash
-grep -l "Project.*fy54" *.OU | nci-job-parser fy54_jobs.csv -
+grep -l "Project.*fy54" *.OU | nci-parser fy54_jobs.csv -
 ```
 
 ### Combine multiple searches
@@ -77,7 +77,7 @@ grep -l "Project.*fy54" *.OU | nci-job-parser fy54_jobs.csv -
 # Create file list with multiple criteria
 find /logs -name "*.OU" -mtime -30 > recent.txt
 grep -l "Project.*fy54" recent.txt > fy54_recent.txt
-nci-job-parser output.csv --file-list fy54_recent.txt
+nci-parser output.csv --file-list fy54_recent.txt
 ```
 
 ## Performance Tips
@@ -119,7 +119,7 @@ The tool creates a CSV file with columns:
 ls examples/*.OU
 
 # Use absolute paths
-nci-job-parser output.csv /full/path/to/examples/*.OU
+nci-parser output.csv /full/path/to/examples/*.OU
 ```
 
 ### Files not parsing
@@ -128,13 +128,13 @@ nci-job-parser output.csv /full/path/to/examples/*.OU
 tail -20 file.OU
 
 # Try with --no-parallel for better error messages
-nci-job-parser --no-parallel output.csv file.OU
+nci-parser --no-parallel output.csv file.OU
 ```
 
 ### Slow performance
 ```bash
 # Increase workers
-nci-job-parser --workers 16 output.csv *.OU
+nci-parser --workers 16 output.csv *.OU
 
 # Check if parallel is enabled (default)
 # Look for "Using N worker(s)" message
@@ -145,6 +145,6 @@ nci-job-parser --workers 16 output.csv *.OU
 # Process in smaller chunks
 find logs/ -name "*.OU" | split -l 10000 - chunk_
 for f in chunk_*; do
-  nci-job-parser batch_$(basename $f).csv --file-list $f
+  nci-parser batch_$(basename $f).csv --file-list $f
 done
 ```

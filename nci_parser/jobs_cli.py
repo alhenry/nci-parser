@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Command-line interface for NCI Job Parser."""
+"""Jobs subcommand — parse NCI PBS job output files into CSV."""
 
 import csv
 import sys
@@ -12,14 +12,13 @@ from . import __version__
 
 
 def print_help():
-    """Print help message."""
-    print("NCI Job Parser v{}".format(__version__))
+    print("NCI Parser v{}  —  jobs subcommand".format(__version__))
     print()
-    print("Usage: nci-job-parser [OPTIONS] <output.csv> <file1> [<file2> ...]")
-    print("       nci-job-parser [OPTIONS] <output.csv> --file-list <list.txt>")
-    print("       nci-job-parser [OPTIONS] <output.csv> -")
+    print("Usage: nci-parser jobs [OPTIONS] <output.csv> <file1> [<file2> ...]")
+    print("       nci-parser jobs [OPTIONS] <output.csv> --file-list <list.txt>")
+    print("       nci-parser jobs [OPTIONS] <output.csv> -")
     print()
-    print("Parse NCI job output files and write to CSV format.")
+    print("Parse NCI PBS job output files and write to CSV.")
     print()
     print("Options:")
     print("  -h, --help       Show this help message and exit")
@@ -30,17 +29,14 @@ def print_help():
     print("  -                Read file paths from stdin (one per line)")
     print()
     print("Examples:")
-    print("  nci-job-parser results.csv job_logs/*.OU")
-    print("  nci-job-parser --workers 8 results.csv job_logs/*.OU")
-    print("  nci-job-parser results.csv --file-list files.txt")
-    print("  find job_logs -name '*.OU' | nci-job-parser results.csv -")
-    print()
-    print("Documentation: https://github.com/alhenry/nci-job-parser")
+    print("  nci-parser jobs results.csv job_logs/*.OU")
+    print("  nci-parser jobs --workers 8 results.csv job_logs/*.OU")
+    print("  nci-parser jobs results.csv --file-list files.txt")
+    print("  find job_logs -name '*.OU' | nci-parser jobs results.csv -")
 
 
 def print_version():
-    """Print version information."""
-    print("NCI Job Parser v{}".format(__version__))
+    print("NCI Parser v{}".format(__version__))
 
 
 def process_single_file(filepath):
@@ -65,26 +61,28 @@ def process_single_file(filepath):
         return (filepath, None)
 
 
-def main():
-    """Main entry point for the CLI."""
+def jobs_main(argv=None):
+    """Entry point for the 'jobs' subcommand."""
+    if argv is None:
+        argv = sys.argv[2:]  # strip 'nci-parser jobs'
+
     # Handle help and version flags first
-    if len(sys.argv) > 1:
-        if sys.argv[1] in ['-h', '--help', 'help']:
-            print_help()
-            sys.exit(0)
-        if sys.argv[1] in ['-v', '--version', 'version']:
-            print_version()
-            sys.exit(0)
-    
-    if len(sys.argv) < 2:
+    if argv and argv[0] in ['-h', '--help', 'help']:
+        print_help()
+        sys.exit(0)
+    if argv and argv[0] in ['-v', '--version', 'version']:
+        print_version()
+        sys.exit(0)
+
+    if not argv:
         print_help()
         sys.exit(1)
-    
+
     # Parse arguments
-    args = sys.argv[1:]
+    args = list(argv)
     workers = cpu_count()
     use_parallel = True
-    
+
     # Check for options at the beginning
     while args and args[0].startswith('--') and args[0] not in ['--file-list']:
         if args[0] in ['-h', '--help']:
@@ -106,20 +104,19 @@ def main():
         else:
             print(f"Error: Unknown option {args[0]}", file=sys.stderr)
             sys.exit(1)
-    
+
     if len(args) < 1:
         print("Error: Missing output file argument", file=sys.stderr)
         sys.exit(1)
-    
+
     output_csv = args[0]
     files = []
     use_stdin = False
-    
+
     # Process remaining arguments (files or --file-list)
     i = 1
     while i < len(args):
         if args[i] == '--file-list' and i + 1 < len(args):
-            # Read file list from file
             file_list_path = args[i + 1]
             try:
                 with open(file_list_path, 'r') as f:
@@ -131,14 +128,12 @@ def main():
                 sys.exit(1)
             i += 2
         elif args[i] == '-':
-            # Read from stdin
             use_stdin = True
             i += 1
         else:
-            # Regular file argument
             files.append(args[i])
             i += 1
-    
+
     # Read file list from stdin if requested
     if use_stdin:
         try:
@@ -148,30 +143,24 @@ def main():
         except Exception as e:
             print(f"Error reading from stdin: {e}", file=sys.stderr)
             sys.exit(1)
-    
+
     if not files:
         print("Error: No input files specified", file=sys.stderr)
         sys.exit(1)
-    
+
     print(f"Processing {len(files)} file(s)...", file=sys.stderr)
-    
+
     all_rows = []
     all_keys = set()
     processed = 0
     skipped = 0
 
     if use_parallel and len(files) > 1:
-        # Parallel processing for large batches
         print(f"Using {workers} worker(s) for parallel processing", file=sys.stderr)
-        
         with ProcessPoolExecutor(max_workers=workers) as executor:
-            # Submit all files for processing
             future_to_file = {executor.submit(process_single_file, f): f for f in files}
-            
-            # Process results as they complete
             for future in as_completed(future_to_file):
                 filepath, row = future.result()
-                
                 if row:
                     all_rows.append(row)
                     all_keys.update(row.keys())
@@ -179,12 +168,9 @@ def main():
                 else:
                     skipped += 1
                     print(f"Warning: No resource usage section found in {filepath}", file=sys.stderr)
-                
-                # Progress indicator for large batches
                 if (processed + skipped) % 100 == 0:
                     print(f"Progress: {processed + skipped}/{len(files)} files processed", file=sys.stderr)
     else:
-        # Sequential processing for small batches or when parallel is disabled
         for filepath in files:
             try:
                 row = parse_file_tail(filepath)
@@ -204,9 +190,8 @@ def main():
         print("Error: No valid job output files found.", file=sys.stderr)
         sys.exit(1)
 
-    # Order columns: filename first, then sorted
     all_keys = ["filename"] + sorted(k for k in all_keys if k != "filename")
-    
+
     try:
         with open(output_csv, "w", newline="") as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=all_keys, delimiter=",")
@@ -222,4 +207,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    jobs_main()

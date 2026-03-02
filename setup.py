@@ -4,8 +4,8 @@ with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 setup(
-    name="nci-job-parser",
-    version="0.3.0",
+    name="nci-parser",
+    version="0.4.0",
     author="Albert Henry",
     description="Parse NCI job output files into tabular format",
     long_description=long_description,
@@ -20,7 +20,8 @@ setup(
     python_requires=">=3.6",
     entry_points={
         "console_scripts": [
-            "nci-job-parser=nci_job_parser.cli:main",
+            "nci-parser=nci_parser.cli:main",
+            "nci-job-parser=nci_parser.jobs_cli:jobs_main",  # legacy alias
         ],
     },
 )

@@ -11,7 +11,7 @@ import tempfile
 from pathlib import Path
 
 # Import the parser functions
-from nci_job_parser.parser import parse_file_tail, parse_resource_usage_section
+from nci_parser.parser import parse_file_tail, parse_resource_usage_section
 
 
 def create_test_files(source_file, count, test_dir):

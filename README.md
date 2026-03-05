@@ -12,6 +12,10 @@ A Python command-line tool to parse NCI (National Computational Infrastructure) 
   - Produces three tables: overall usage, per-user usage, and storage
   - Reads from a file, stdin (pipe directly from `nci-account`), or `-`
   - Write output to files or print to stdout for further processing
+- **`monitor` subcommand** — continuously poll `nci_account` at a fixed interval and keep output files up to date
+  - Calls `nci_account -v -P <project>` on a schedule and parses the result
+  - Overwrites dated TSV files each poll; optional `--archive` saves timestamped copies
+  - `--stdout` streams live TSV output — pipeable to `csvlook`, `column`, etc.
 
 ## Performance
 
@@ -148,6 +152,56 @@ nci-account -v -P ab12 | nci-parser quota --stdout --output usage-users
 # Pipe into column for pretty printing
 nci-account -v -P ab12 | nci-parser quota --stdout --output usage-global | column -t -s $'\t'
 ```
+
+---
+
+### `monitor` — Continuously poll and parse NCI account data
+
+```
+nci-parser monitor quota -P <project> [OPTIONS]
+```
+
+Repeatedly calls `nci_account -v -P <project>`, parses the quota report, and writes (or re-writes) TSV output files on a fixed interval. Output files follow the same naming convention as the `quota` subcommand: `<YYYY-MM-DD>.<project>.<table>.tsv`.
+
+**Required arguments:**
+
+| Argument | Description |
+|---|---|
+| `quota` | Report type to monitor (only `quota` supported) |
+| `-P, --project ID` | NCI project identifier (e.g. `fy54`) |
+
+**Options:**
+
+| Option | Description |
+|---|---|
+| `-h, --help` | Show help and exit |
+| `-v, --version` | Show version and exit |
+| `--interval-sec N` | Seconds between polls (default: `300`) |
+| `--output TABLE[,TABLE]` | Tables to write: `usage-global`, `usage-users`, `storage-global` (default: all three) |
+| `--outdir DIR` | Write output files to DIR (default: current directory) |
+| `--archive` | Also save a timestamped copy on each poll (`<YYYY-MM-DDTHHmmSS>.<project>.<table>.tsv`) |
+| `--stdout` | Stream TSV to stdout instead of writing files. Each poll is preceded by a `## <timestamp>` header. Mutually exclusive with `--outdir`/`--archive`. |
+
+**Examples:**
+
+```bash
+# Poll every 5 minutes (default), write TSV files to current directory
+nci-parser monitor quota -P fy54
+
+# Poll every 60 seconds, write to a specific directory
+nci-parser monitor quota -P fy54 --interval-sec 60 --outdir /data/nci
+
+# Only track storage, keep an archive of every snapshot
+nci-parser monitor quota -P fy54 --output storage-global --archive
+
+# Stream storage table live to stdout
+nci-parser monitor quota -P fy54 --stdout --output storage-global
+
+# Pretty-print live output in the terminal
+nci-parser monitor quota -P fy54 --stdout --output storage-global | csvlook -t
+```
+
+> **Note:** `nci_account` must be available on your `PATH` (it is installed as part of the NCI environment on Gadi).
 
 ## License
 

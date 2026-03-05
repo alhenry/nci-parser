@@ -6,12 +6,14 @@ import sys
 from . import __version__
 from .jobs_cli import jobs_main
 from .monitor_cli import monitor_main
+from .plot_cli import plot_main
 from .quota_cli import quota_main
 
 
 _SUBCOMMANDS = {
     'jobs':    jobs_main,
     'monitor': monitor_main,
+    'plot':    plot_main,
     'quota':   quota_main,
 }
 
@@ -25,6 +27,7 @@ def print_help():
     print("  jobs     Parse NCI PBS job output files into CSV")
     print("  quota    Parse NCI account/quota reports into TSV")
     print("  monitor  Repeatedly poll nci_account and write parsed TSV output")
+    print("  plot     Plot time-series data from monitor TSV log files")
     print()
     print("Options:")
     print("  -h, --help     Show this help message and exit")
@@ -37,6 +40,7 @@ def print_help():
     print("  nci-parser quota report.txt")
     print("  nci-parser quota --output usage-users report.txt")
     print("  nci-parser monitor quota -P fy54 --interval-sec 300")
+    print("  nci-parser plot storage-global fy54.storage-global.tsv")
 
 
 def main():

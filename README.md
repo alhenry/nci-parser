@@ -14,7 +14,9 @@ A Python command-line tool to parse NCI (National Computational Infrastructure) 
   - Write output to files or print to stdout for further processing
 - **`monitor` subcommand** — continuously poll `nci_account` at a fixed interval and keep output files up to date
   - Calls `nci_account -v -P <project>` on a schedule and parses the result
-  - Overwrites dated TSV files each poll; optional `--archive` saves timestamped copies
+  - Every row includes a `polled_at` timestamp column
+  - Default mode overwrites dated TSV files each poll; `--archive` also saves a timestamped copy per poll
+  - `--append` builds a single growing history log (`<project>.<table>.tsv`) — header written once, rows added each poll
   - `--stdout` streams live TSV output — pipeable to `csvlook`, `column`, etc.
 
 ## Performance
@@ -161,7 +163,12 @@ nci-account -v -P ab12 | nci-parser quota --stdout --output usage-global | colum
 nci-parser monitor quota -P <project> [OPTIONS]
 ```
 
-Repeatedly calls `nci_account -v -P <project>`, parses the quota report, and writes (or re-writes) TSV output files on a fixed interval. Output files follow the same naming convention as the `quota` subcommand: `<YYYY-MM-DD>.<project>.<table>.tsv`.
+Repeatedly calls `nci_account -v -P <project>`, parses the quota report, and writes TSV output on a fixed interval. A `polled_at` column is added to every row so you always know when data was captured.
+
+Three output modes:
+- **Default** — overwrites `<YYYY-MM-DD>.<project>.<table>.tsv` each poll (latest snapshot)
+- **`--append`** — appends to `<project>.<table>.tsv` (growing history log)
+- **`--stdout`** — streams TSV to stdout (pipeable)
 
 **Required arguments:**
 
@@ -180,19 +187,29 @@ Repeatedly calls `nci_account -v -P <project>`, parses the quota report, and wri
 | `--output TABLE[,TABLE]` | Tables to write: `usage-global`, `usage-users`, `storage-global` (default: all three) |
 | `--outdir DIR` | Write output files to DIR (default: current directory) |
 | `--archive` | Also save a timestamped copy on each poll (`<YYYY-MM-DDTHHmmSS>.<project>.<table>.tsv`) |
-| `--stdout` | Stream TSV to stdout instead of writing files. Each poll is preceded by a `## <timestamp>` header. Mutually exclusive with `--outdir`/`--archive`. |
+| `--append` | Append rows to a persistent log file (`<project>.<table>.tsv`) instead of overwriting. Header written only when the file is new. Can be combined with `--archive`. |
+| `--stdout` | Stream TSV to stdout instead of writing files. Each poll is preceded by a `## <timestamp>` header. |
 
 **Examples:**
 
 ```bash
-# Poll every 5 minutes (default), write TSV files to current directory
+# Poll every 5 minutes (default), overwrite dated TSV files in current directory
 nci-parser monitor quota -P fy54
 
 # Poll every 60 seconds, write to a specific directory
 nci-parser monitor quota -P fy54 --interval-sec 60 --outdir /data/nci
 
-# Only track storage, keep an archive of every snapshot
-nci-parser monitor quota -P fy54 --output storage-global --archive
+# Build a growing history log — appending every 5 minutes
+nci-parser monitor quota -P fy54 --append
+
+# Append to a log in a specific directory
+nci-parser monitor quota -P fy54 --append --outdir /data/nci
+
+# Append only the storage table
+nci-parser monitor quota -P fy54 --append --output storage-global
+
+# Append to a log and also keep individual timestamped snapshots
+nci-parser monitor quota -P fy54 --append --archive
 
 # Stream storage table live to stdout
 nci-parser monitor quota -P fy54 --stdout --output storage-global

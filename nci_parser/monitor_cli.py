@@ -44,6 +44,10 @@ def print_help():
     print("  --outdir DIR            Write output files to DIR (default: current directory)")
     print("  --archive               In addition to the dated files, also save a")
     print("                          timestamped copy (<datetime>.<project>.<table>.tsv)")
+    print("  --append                Append rows to a persistent log file instead of")
+    print("                          overwriting. Log files are named <project>.<table>.tsv")
+    print("                          and the header is written only when the file is new.")
+    print("                          Can be combined with --archive.")
     print("  --stdout                Print TSV to stdout instead of writing files.")
     print("                          Each poll is preceded by a '## <timestamp>' header.")
     print("                          If multiple tables are selected, each is also")
@@ -55,6 +59,8 @@ def print_help():
     print("  nci-parser monitor quota -P fy54 --interval-sec 300 --outdir /data/nci")
     print("  nci-parser monitor quota -P fy54 --output usage-global,storage-global --archive")
     print("  nci-parser monitor quota -P fy54 --stdout --output storage-global")
+    print("  nci-parser monitor quota -P fy54 --append")
+    print("  nci-parser monitor quota -P fy54 --append --output storage-global")
     print("  nci-parser monitor quota -P fy54 --stdout --output storage-global | csvlook -t")
 
 
@@ -90,6 +96,30 @@ def _write_tables(result, outputs, out_base, stem, label, archive_stem=None):
     return written
 
 
+def _append_tables(result, outputs, out_base, project):
+    """Append parsed rows to persistent log files, writing the header only for new/empty files.
+    Returns list of (table_name, path, nrows).
+    """
+    appended = []
+    for table_name in outputs:
+        rows = result.get(table_name, [])
+        if not rows:
+            print(f"  Warning: No data for table '{table_name}'", file=sys.stderr)
+            continue
+        out_path = out_base / f"{project}.{table_name}.tsv"
+        write_header = not out_path.exists() or out_path.stat().st_size == 0
+        try:
+            with open(out_path, 'a', newline='') as f:
+                writer = csv.DictWriter(f, fieldnames=rows[0].keys(), delimiter='\t')
+                if write_header:
+                    writer.writeheader()
+                writer.writerows(rows)
+            appended.append((table_name, out_path, len(rows)))
+        except Exception as e:
+            print(f"  Error: Failed to append to {out_path}: {e}", file=sys.stderr)
+    return appended
+
+
 def _print_tables_stdout(result, outputs, poll_time):
     """Print parsed tables to stdout with timestamp + optional table headers."""
     print(f"## {poll_time}")
@@ -107,7 +137,7 @@ def _print_tables_stdout(result, outputs, poll_time):
     sys.stdout.flush()
 
 
-def _poll_once(project, outputs, out_base, archive, to_stdout=False):
+def _poll_once(project, outputs, out_base, archive, to_stdout=False, append=False):
     """Run nci_account, parse, write files (or stdout).  Returns True on success."""
     now = datetime.datetime.now()
     date_str = now.strftime('%Y-%m-%d')
@@ -159,6 +189,15 @@ def _poll_once(project, outputs, out_base, archive, to_stdout=False):
         _print_tables_stdout(parsed, outputs, poll_time)
         return True
 
+    if append:
+        written = _append_tables(parsed, outputs, out_base, project)
+        for table_name, out_path, nrows in written:
+            print(f"  [{poll_time}]  {table_name:20s}  {nrows:4d} rows  →  {out_path} (appended)",
+                  file=sys.stderr)
+        if archive_stem:
+            _write_tables(parsed, outputs, out_base, archive_stem, label)
+        return bool(written)
+
     written = _write_tables(parsed, outputs, out_base, stem, label, archive_stem)
     for table_name, out_path, nrows in written:
         print(f"  [{poll_time}]  {table_name:20s}  {nrows:4d} rows  →  {out_path}",
@@ -194,6 +233,7 @@ def monitor_main(argv=None):
     outputs = list(VALID_OUTPUTS)
     outdir = Path('.')
     archive = False
+    append = False
     to_stdout = False
 
     # Parse options
@@ -244,6 +284,9 @@ def monitor_main(argv=None):
         elif opt == '--archive':
             archive = True
             args = args[1:]
+        elif opt == '--append':
+            append = True
+            args = args[1:]
         elif opt == '--stdout':
             to_stdout = True
             args = args[1:]
@@ -258,7 +301,8 @@ def monitor_main(argv=None):
 
     if not to_stdout:
         outdir.mkdir(parents=True, exist_ok=True)
-        print(f"Monitoring project '{project}' every {interval}s  →  {outdir.resolve()}",
+        mode = "append" if append else "overwrite"
+        print(f"Monitoring project '{project}' every {interval}s  [{mode}]  →  {outdir.resolve()}",
               file=sys.stderr)
     else:
         print(f"Monitoring project '{project}' every {interval}s  →  stdout",
@@ -267,7 +311,7 @@ def monitor_main(argv=None):
 
     try:
         while True:
-            _poll_once(project, outputs, outdir, archive, to_stdout=to_stdout)
+            _poll_once(project, outputs, outdir, archive, to_stdout=to_stdout, append=append)
             time.sleep(interval)
     except KeyboardInterrupt:
         print("\nStopped.", file=sys.stderr)

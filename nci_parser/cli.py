@@ -5,12 +5,14 @@ import sys
 
 from . import __version__
 from .jobs_cli import jobs_main
+from .monitor_cli import monitor_main
 from .quota_cli import quota_main
 
 
 _SUBCOMMANDS = {
-    'jobs':  jobs_main,
-    'quota': quota_main,
+    'jobs':    jobs_main,
+    'monitor': monitor_main,
+    'quota':   quota_main,
 }
 
 
@@ -20,8 +22,9 @@ def print_help():
     print("Usage: nci-parser <subcommand> [OPTIONS] ...")
     print()
     print("Subcommands:")
-    print("  jobs   Parse NCI PBS job output files into CSV")
-    print("  quota  Parse NCI account/quota reports into TSV")
+    print("  jobs     Parse NCI PBS job output files into CSV")
+    print("  quota    Parse NCI account/quota reports into TSV")
+    print("  monitor  Repeatedly poll nci_account and write parsed TSV output")
     print()
     print("Options:")
     print("  -h, --help     Show this help message and exit")
@@ -33,6 +36,7 @@ def print_help():
     print("  nci-parser jobs results.csv job_logs/*.OU")
     print("  nci-parser quota report.txt")
     print("  nci-parser quota --output usage-users report.txt")
+    print("  nci-parser monitor quota -P fy54 --interval-sec 300")
 
 
 def main():

@@ -148,6 +148,11 @@ def _poll_once(project, outputs, out_base, archive, to_stdout=False):
         print(f"  Error: Failed to parse nci_account output: {e}", file=sys.stderr)
         return False
 
+    # Prepend polled_at timestamp to every row in every table
+    for table_name in parsed:
+        parsed[table_name] = [{'polled_at': poll_time, **row}
+                               for row in parsed[table_name]]
+
     label = f"nci_account -v -P {project}"
 
     if to_stdout:

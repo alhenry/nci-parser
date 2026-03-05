@@ -315,12 +315,17 @@ def parse_storage_global(text):
 VALID_OUTPUTS = ('usage-global', 'usage-users', 'storage-global')
 
 
-def parse_quota_file(filepath):
-    """Parse a quota file. Returns dict with all three tables."""
-    with open(filepath, 'r', encoding='utf-8', errors='ignore') as fh:
-        text = fh.read()
+def parse_quota_text(text):
+    """Parse quota report text. Returns dict with all three tables."""
     return {
         'usage-global':   parse_usage_global(text),
         'usage-users':    parse_usage_users(text),
         'storage-global': parse_storage_global(text),
     }
+
+
+def parse_quota_file(filepath):
+    """Parse a quota file. Returns dict with all three tables."""
+    with open(filepath, 'r', encoding='utf-8', errors='ignore') as fh:
+        text = fh.read()
+    return parse_quota_text(text)

@@ -209,6 +209,8 @@ def parse_storage_global(text):
     num_unit = re.compile(r'^[\d.,]+\s+\S+$')
 
     def split_tokens(line):
+        # Strip inline annotations like "**Over inode quota**" before tokenising
+        line = re.sub(r'\*\*[^*]+\*\*', '', line)
         return [p.strip() for p in re.split(r'\s{2,}', line.strip()) if p.strip()]
 
     def is_num(tok):
